@@ -11,6 +11,9 @@
     a list of file objective
 
 '''
+
+from file import File
+
 class Node:
 
     node_name = ""
@@ -49,5 +52,17 @@ class Node:
         file_list.append(new_file)
 
     # check if a particular file exist in this node
-    
+    def check_file_exit(self, name):
+        for file in self.file_list:
+            if file.getName() == name:
+                return True
+        return False
+
+    # get a particular file object given name
+    def get_file(self, name):
+        for file in self.file_list:
+            if file.getName() == name:
+                return file
+        return None
+        
     
