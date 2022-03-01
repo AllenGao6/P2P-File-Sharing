@@ -9,8 +9,6 @@
     size of file
     chunk list (should automaticlly be splitted into chunks, each chunk should have indicator)
 
-
-    
 '''
 import base64
 import sys
@@ -27,17 +25,19 @@ class File:
     # will be decided later how to handle indicator and hashing for each chunk, most likely will define a chunk hash function
     chunk_list = []
     hashed_chunk_list = []
-    SINGLE_CHUNK_SIZE = 2048
+    SINGLE_CHUNK_SIZE = 8192
 
-    def __init__(self, file_name, file_size=None):
+    def __init__(self, file_name, file_size=None, full_info=False):
         self.file_name = file_name
         self.file_type = self.get_fileType()
         if not file_size:
             self.chunkize()
         else:
             self.file_size = file_size
-            self.chunk_list = [None] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
-
+            if full_info:
+                self.chunk_list = [True] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
+            else:
+                self.chunk_list = [None] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
 
     # pre-define chunk indicator given the size of the file
     def chunkize(self):
@@ -125,4 +125,19 @@ class File:
             return self.chunk_list[index]
         return None
 
+    # register a chunk in file given index
+    def register_chunk(self, index):
+        try:
+            self.chunk_list[index] = True
+            return True
+        except:
+            return False
+
+    # get chunk ownership info
+    def get_chunk_info(self):
+        index_list = []
+        for i in range(len(self.chunk_list)):
+            if self.chunk_list[i] != None:
+                index_list.append(i)
+        return index_list
     

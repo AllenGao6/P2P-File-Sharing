@@ -62,7 +62,7 @@ Request code:
 # socket constant
 # server_host = '104.38.105.225'
 server_host = '127.0.0.1'
-server_port = 65422
+server_port = 65484
 def check_response(responce):
     if responce.decode('utf-8') != "200":
         print("connection failed!")
@@ -116,6 +116,41 @@ def send_server_request(request_code, data=None, port=None):
         else:
             print(res["error"])
             return None
+
+    elif request_code == 300: # request file location
+        m = {"code": request_code, "data": data}
+        data = json.dumps(m)
+        ClientSocket.send(bytes(data,encoding="utf-8"))
+        
+        # waiting for the response
+        res = ClientSocket.recv(4096)
+        # close the connection
+        ClientSocket.close()
+        res = json.loads(res.decode("utf-8"))
+        if res['status'] == "Success":
+            return res["data"]
+        else:
+            print(res["error"])
+            return None
+
+    elif request_code == 400: # register a chunk
+
+        m = {"code": request_code, "data": data}
+        data = json.dumps(m)
+        ClientSocket.send(bytes(data,encoding="utf-8"))
+        
+        # waiting for the response
+        res = ClientSocket.recv(2048)
+        # close the connection
+        ClientSocket.close()
+        res = json.loads(res.decode("utf-8"))
+        if res['status'] == "Success":
+            return True
+        else:
+            print(res["error"])
+            return False
+        
+    
     return None
 
         

@@ -12,7 +12,7 @@ import base64
 ServerSocket = socket.socket()
 #host = '104.38.105.225'
 host = '127.0.0.1'
-port = 65422
+port = 65484
 ThreadCount = 0
 
 # local data storage
@@ -69,6 +69,24 @@ def get_file_list():
     result["total_file"] = len(result)
     return result
 
+# get all location for a particular file
+def get_file_location(filename):
+    locations = {}
+    for node in client_list:
+        if node.check_file_exit(filename):
+            print([node.get_port(), node.get_file(filename).get_chunk_info()])
+            locations[node.get_ip_addr()] = [node.get_port(), node.get_file(filename).get_chunk_info()]
+    return locations
+
+# register a file chunk for a particular peer node
+def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
+   
+    for node in client_list:
+        if node.get_ip_addr() == peer_addr and node.get_port() == peer_port:
+            status = node.register_chunk(chunk_index, filename, file_size)
+            return status
+    return False
+
 
 
 try:
@@ -123,17 +141,32 @@ def threaded_client(connection, addr):
         connection.send(response)
         connection.close()
 
-    elif data['code'] == 200:
+    elif data['code'] == 200: # request file list
         result = get_file_list()
         response = package_response(result, "Success")
         connection.send(response)
         connection.close()
 
-    elif data['code'] == 300:
-        pass
-    elif data['code'] == 400:
-        pass
-    elif data['code'] == 500:
+    elif data['code'] == 300: # file location request
+        result = get_file_location(data['data'])
+        response = package_response(result, "Success")
+        connection.send(response)
+        connection.close()
+
+    elif data['code'] == 400: # Chunk Register Request:
+        info = data['data']
+        chunk_index, peer_addr, peer_port, filename, file_size = info['chunk_index'], info['peer_addr'], info['peer_port'], info['filename'], info['file_size']
+
+        result = register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size)
+        
+        if result:
+            response = package_response({}, "Success")
+        else:
+            response = package_response({}, "Failed", Error_code="Failed to register chunk for this file")
+        connection.send(response)
+        connection.close()
+
+    elif data['code'] == 500: # File Chunk Request:
         pass
     else:
         print("INVALID CODE RECIEVED!")

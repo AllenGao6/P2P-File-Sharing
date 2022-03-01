@@ -54,7 +54,7 @@ class Node:
         if self.check_file_complete(file_name, file_size):
             return False
         try:
-            new_file = File(file_name, file_size)
+            new_file = File(file_name, file_size, full_info=True)
             self.file_list.append(new_file)
             return True
         except:
@@ -80,5 +80,17 @@ class Node:
             if file.getName() == name:
                 return file
         return None
+
+    # register a file chunk as recieved given index
+    def register_chunk(self, index, filename, file_size):
+        if self.check_file_exit(filename):
+            return self.get_file(filename).register_chunk(index)
+        else:
+            new_file = File(filename, file_size)
+            self.file_list.append(new_file)
+            return new_file.register_chunk(index)
+
+             
+
         
     

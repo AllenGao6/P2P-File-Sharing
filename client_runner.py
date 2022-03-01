@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(description='Choose an action to perform in thi
 # select action
 parser.add_argument('--reg', default=False, action='store_true')
 parser.add_argument('--file_list_request', default=False, action='store_true')
+parser.add_argument('--file_location_request', default=False, action='store_true')
 parser.add_argument('--download', default=False, action='store_true')
 
 args = parser.parse_args()
@@ -20,8 +21,9 @@ args = parser.parse_args()
 reg= args.reg
 file_list_request = args.file_list_request
 download = args.download
+file_location_request = args.file_location_request
 
-total_ordering = reg + file_list_request + download
+total_ordering = reg + file_list_request + download + file_location_request
 
 if total_ordering == 0:
     print("Please Select an Action")
@@ -30,6 +32,8 @@ elif total_ordering > 1:
     print("Please Select One Action At a Time")
     exit()
 
+# supporting function call
+    
 if reg: 
     # Register Request: Tells the server what files the peer
     # wants to share with the network. Takes in the IP address
@@ -70,7 +74,7 @@ if reg:
         send_package.append((file.getName(), file.get_file_size()))
 
     # sending the package
-    result = send_server_request(100, send_package, port)
+    result = send_server_request(100, data=send_package, port=port)
     if not result:
         remove_files(added_file, "obj")
         print("registered failed, please try again")
@@ -96,12 +100,41 @@ elif file_list_request:
         for filename, size in result.items():
             print(filename + " : " + str(size))
 
+elif file_location_request:
+    filename = input("input the filename to search for locations: ")
+    result = send_server_request(300, data=filename)
+    if result:
+        for key, value in result.items():
+            port, index_list= value
+            print("IP Addr: "+ str(key) + "   Port: " + str(port)+ " Available Chunks: " + str(index_list))
+    else:
+        print("File not found :(")
+
 elif download:
     filename = input("Enter the file you wish to download: (Select extractly like file list): ")
+
+    result = send_server_request(200)
+    # check for network error or file existence problem
+    if not result:
+        print("System Failed, can't not get files list")
+        exit()
+    if filename not in result.keys():
+        print("File Request Does Not Exit, Please Try Again")
+        exit()
+
+    # True procedure for file downloading
+
     
+
+
+    # get a list of file name here, check if it the file exist in this list,
+    # if not in the list: return error
+    # Proceed otherwise enter the main phase
+    
+
 else:
     # File Chunk Request: Asks the peer to return the file
     # chunk. Reads in a file name, chunk indicator.
-    pass
+    print("Wrong Command Detected")
 
 
