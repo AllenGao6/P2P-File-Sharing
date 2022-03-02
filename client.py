@@ -107,7 +107,7 @@ Request code:
 # socket constant
 server_host = '104.38.105.225'
 # server_host = '127.0.0.1'
-server_port = 65400
+server_port = 65401
 
 # this function should be placed somewhere else, put here as a shortcut
 def find_local_ip_addr():
@@ -118,7 +118,7 @@ def find_local_ip_addr():
     return local_addr
 
 client_server_addr = find_local_ip_addr()
-client_server_port = 61000
+client_server_port = 61001
 
 def get_client_server_addr():
     return client_server_addr
@@ -187,7 +187,7 @@ def send_server_request(request_code, data=None, port=None):
         ClientSocket.send(bytes(data,encoding="utf-8"))
         
         # waiting for the response
-        res = ClientSocket.recv(4096)
+        res = ClientSocket.recv(8192)
         # print(res)
         # close the connection
         ClientSocket.close()

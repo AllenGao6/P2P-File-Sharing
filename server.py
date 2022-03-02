@@ -5,6 +5,7 @@ from _thread import *
 #import other class object/function
 import json
 import base64
+from node import Node
 
 
 # local data storage
@@ -82,12 +83,14 @@ def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
 
 
 # --------------------------------Socket Content Below------------------------------#
-
+# kill port command if port is ocuppied
+#sudo lsof -i :3000
+#kill -9 <PID>
 # socket related constant
 ServerSocket = socket.socket()
-#host = '104.38.105.225'
-host = '127.0.0.1'
-port = 65400
+host = '104.38.105.225'
+# host = '127.0.0.1'
+port = 65401
 ThreadCount = 0
 
 try:
@@ -138,7 +141,7 @@ def threaded_client(connection, addr):
     elif data['code'] == 300: # file location request
         result = get_file_location(data['data'])
         response = package_response(result, "Success")
-        connection.send(response)
+        connection.sendall(response)
         connection.close()
 
     elif data['code'] == 400: # Chunk Register Request:
