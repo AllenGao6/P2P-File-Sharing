@@ -36,8 +36,21 @@ class File:
             self.file_size = file_size
             if full_info:
                 self.chunk_list = [True] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
+                self.hashed_chunk_list = [True] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
             else:
                 self.chunk_list = [None] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
+                self.hashed_chunk_list = [None] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
+
+    # create the file in local folder
+    def create_file(self):
+        true_file_name = self.file_name.split('/')[-1]
+        converted_string = b"".join(self.chunk_list)
+        if len(converted_string) != self.file_size:
+            print("Error when constructing file, file size does not match")
+        f = open('FILE_RECIEVE/'+true_file_name, 'wb')
+        f.write(base64.b64decode((converted_string)))
+        f.close()
+        print("File Created locally!!!!!!!!")
 
     # pre-define chunk indicator given the size of the file
     def chunkize(self):
@@ -109,6 +122,14 @@ class File:
         # print("\nSHA3-256 Hash: ", obj_sha3_256.hexdigest())
 
         return obj_sha3_256.hexdigest()
+
+    # add a piece to chunk_list
+    def add_chunk(self, chunk, index):
+        self.chunk_list[index] = chunk
+
+    # add a piece to hash chunk_list
+    def add_hash_chunk(self, hash_chunk, index):
+        self.hashed_chunk_list[index] = hash_chunk
     
     # get the size of chunk_list
     def get_chunk_list_size(self):
@@ -125,6 +146,13 @@ class File:
             return self.chunk_list[index]
         return None
 
+     # get a particular chunk hash in chunk_list
+    def get_index_chunk_hash(self, index):
+        if self.check_file_chunk(index):
+            return self.hashed_chunk_list[index]
+        return None
+
+
     # register a chunk in file given index
     def register_chunk(self, index):
         try:
@@ -134,10 +162,21 @@ class File:
             return False
 
     # get chunk ownership info
-    def get_chunk_info(self):
+    def get_chunk_info(self, find_miss=False):
+        # this part of the code is not optimized, but this should do the trick
         index_list = []
         for i in range(len(self.chunk_list)):
-            if self.chunk_list[i] != None:
-                index_list.append(i)
+            if find_miss:
+                if self.chunk_list[i] == None:
+                    index_list.append(i)
+            else:
+                if self.chunk_list[i] != None:
+                    index_list.append(i)
         return index_list
+
+    # get the number of available chunk in file
+    def get_aval_chunk_size(self):
+        result = self.index_list
+        return len(result)
+
     

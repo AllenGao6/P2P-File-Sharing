@@ -8,13 +8,6 @@ import json
 import base64
 
 
-# socket related constant
-ServerSocket = socket.socket()
-#host = '104.38.105.225'
-host = '127.0.0.1'
-port = 65484
-ThreadCount = 0
-
 # local data storage
 client_list = []
 
@@ -89,6 +82,15 @@ def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
 
 
 
+# --------------------------------Socket Content Below------------------------------#
+
+# socket related constant
+ServerSocket = socket.socket()
+#host = '104.38.105.225'
+host = '127.0.0.1'
+port = 65483
+ThreadCount = 0
+
 try:
     ServerSocket.bind((host, port))
 except socket.error as e:
@@ -96,19 +98,6 @@ except socket.error as e:
 
 print('Waitiing for a Connection..')
 ServerSocket.listen(5)
-
-
-
-
-local_byte_list = []
-
-def construct_file():
-
-    converted_string = b"".join(local_byte_list)
-    print(len(converted_string))
-    decodeit = open('out.pdf', 'wb')
-    decodeit.write(base64.b64decode((converted_string)))
-    decodeit.close()
 
 def threaded_client(connection, addr):
     address, port = addr
@@ -183,6 +172,9 @@ while True:
     print('Thread Number: ' + str(ThreadCount))
 
 
+
+
+
      # index = 0
     # while index != 4318:
     #     data = connection.recv(1024)
@@ -226,3 +218,14 @@ while True:
 #     print('Thread Number: ' + str(ThreadCount))
 
 # ServerSocket.close()
+
+
+# local_byte_list = []
+
+# def construct_file():
+
+#     converted_string = b"".join(local_byte_list)
+#     print(len(converted_string))
+#     decodeit = open('out.pdf', 'wb')
+#     decodeit.write(base64.b64decode((converted_string)))
+#     decodeit.close()

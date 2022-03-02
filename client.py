@@ -1,22 +1,35 @@
-'''
-    will be run by each peer to get information from server, upload from server and so on
-'''
 #!/usr/bin/env python3
 
+from ipaddress import ip_address
+import os
+from _thread import *
 import socket
 import base64
 import time
-import argparse
 from file import File
 import json
+from request import *
+import hashlib
 
 
+
+
+# # ip, port global info
+# # host = socket.gethostbyname(socket.gethostname())
+# host = '127.0.0.1'
+# port = 65483
 
 # creating local file list
 local_files = []
 
 
 #-----------------supporting function call-------------------
+# get the file objext by file name
+def get_file(name):
+    for file in local_files:
+        if file.getName() == name:
+            return file
+    return None
 # get all filename existed locallly
 def get_all_filename():
     return [file.getName() for file in local_files]
@@ -48,6 +61,71 @@ def remove_files(files, type):
         for file in files:
             remove_file_by_name(file)
 
+# get certain chunk data from a file
+def get_file_chunk(filename, chunk_index):
+    file = get_file(filename)
+    if not file:
+        print("Failed to find file")
+        return None, None
+    byte_data = file.get_index_chunk(chunk_index)
+    if not byte_data:
+        print("Failed to get Chunk")
+        return None, None
+    hashed_block = file.get_index_chunk_hash(chunk_index)
+    return byte_data, hashed_block
+
+# look for peer_addr and port for a particular index
+def get_peer_info_by_index(data, index, file_name):
+    for key, value in data.items():
+        port, index_list = value
+        if index in index_list:
+            return (key, port, index, file_name)
+
+# find "num" number of rarest chunk index in the whole network
+# return each of their chunk_index, peer_addr, peer_port
+def find_rarest_block(file, num):
+    # get what we still miss
+    # get what is availble on the network
+    # get what we miss is most rare in the network
+    # rank these rarest chunk and select top num of chunk to return
+    file_name = file.getName()
+    missing_local = file.get_chunk_info(find_miss=True)
+    result = send_server_request(300, data=file.getName())
+    chunk_frequency = {}
+    for key, value in result.items():
+        port, index_list= value
+        for index in index_list:
+            if index not in chunk_frequency:
+                chunk_frequency[index] = 1
+            else:
+                chunk_frequency[index] += 1
+    # only looking for the missing part
+    for index in chunk_frequency.keys():
+        if index not in missing_local:
+            del chunk_frequency[index]
+
+    # rank the frequency
+    info_data = []
+    sort_orders = sorted(chunk_frequency.items(), key=lambda x: x[1])
+    for i in range(num):
+        index, _ = sort_orders[i]
+        info_data.append(get_peer_info_by_index(result, index, file_name))
+    
+    return info_data
+
+        
+# verify hash
+def check_hash(byte_block, hash_block):
+    # implement sha1 for verification
+    obj_sha3_256 = hashlib.sha3_256(byte_block)
+
+    if obj_sha3_256 == hash_block:
+        return True
+    return False
+
+
+
+# --------------------------------Socket Content Below------------------------------#
 
 
 '''
@@ -62,7 +140,16 @@ Request code:
 # socket constant
 # server_host = '104.38.105.225'
 server_host = '127.0.0.1'
-server_port = 65484
+server_port = 65483
+client_server_addr = '127.0.0.1'
+client_server_port = 61000
+
+def get_client_server_addr():
+    return client_server_addr
+
+def get_client_server_port():
+    return client_server_port
+
 def check_response(responce):
     if responce.decode('utf-8') != "200":
         print("connection failed!")
@@ -124,6 +211,7 @@ def send_server_request(request_code, data=None, port=None):
         
         # waiting for the response
         res = ClientSocket.recv(4096)
+        # print(res)
         # close the connection
         ClientSocket.close()
         res = json.loads(res.decode("utf-8"))
@@ -135,10 +223,12 @@ def send_server_request(request_code, data=None, port=None):
 
     elif request_code == 400: # register a chunk
 
-        m = {"code": request_code, "data": data}
+        added_data = data
+        added_data['peer_addr'] = get_client_server_addr()
+        added_data['peer_port'] = get_client_server_port()
+        m = {"code": request_code, "data": added_data}
         data = json.dumps(m)
         ClientSocket.send(bytes(data,encoding="utf-8"))
-        
         # waiting for the response
         res = ClientSocket.recv(2048)
         # close the connection
@@ -153,33 +243,54 @@ def send_server_request(request_code, data=None, port=None):
     
     return None
 
-        
-        
-        
+def send_peer_request(peer_host, peer_port, chunk_index, file_name):
+
+    ClientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    print('Waiting for connection')
+    try:
+        ClientSocket.connect((peer_host, peer_port))
+    except socket.error as e:
+        print(str(e))
+    Response = ClientSocket.recv(2048)
+    # handshake, will have other error code here, may not be necessary for this project :)
+    if not check_response(Response):
+        ClientSocket.close()
+        return None
+    # sending out request
+    data = {}
+    data['filename'] = file_name
+    data['chunk_index'] = chunk_index
+    data = json.dumps(data)
+    ClientSocket.send(bytes(data,encoding="utf-8"))
+
+    # recieve responce data
+    byte_block = ClientSocket.recv(8192)
+    if len(byte_block) == 0: # if the responce is 
+        print("Failed to get data")
+        ClientSocket.close()
+        return None
+    # send success response to get hash data
+    data = {'status':"Success"}
+    data = json.dumps(data)
+    ClientSocket.send(bytes(data,encoding="utf-8"))
+    # recieve hashed data
+    res = ClientSocket.recv(2048)
+    res = json.loads(res.decode("utf-8"))
+    hash_byte = res['data']
+    # check hash for data integrity
+    if not check_hash(byte_block, hash_byte):
+        print("Hash Does Not Match With Data")
+        ClientSocket.close()
+        return None
+    # print out log here
+    print("get file", file_name, " chunk index ", chunk_index, " from peer ", peer_host)
+    
+    return [byte_block, hash_byte, chunk_index]
+    
 
 
-    # Response = ClientSocket.recv(2048)
-    # print(Response.decode('utf-8'))
-
-    # m = {"id": 2, "name": "abc"} # a real dict.
 
 
-    # data = json.dumps(m)
-
-    # index = 0
-    # print(len( bytelist))
-    # while index != len(bytelist):
-    #     # client_input = str(input("Say Something: "))
-    #     # ClientSocket.send(str.encode(client_input))
-    #     # time.sleep(0.2)
-    #     ClientSocket.send(bytelist[index])
-    #     Response = ClientSocket.recv(1024)
-    #     if Response.decode('utf-8') != "200":
-    #         print("process error!")
-    #         break
-    #     print("going througg iteration", str(index))
-    #     index += 1
-
-    # ClientSocket.close()
 
 

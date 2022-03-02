@@ -5,6 +5,8 @@ from os import path
 import os
 from file import File
 from client import *
+from progress_bar import printProgressBar
+import concurrent.futures
 
 parser = argparse.ArgumentParser(description='Choose an action to perform in this P2P network')
 
@@ -33,7 +35,18 @@ elif total_ordering > 1:
     exit()
 
 # supporting function call
-    
+
+# ask for a peer a chunk of file
+def peer_file_request(data):
+    host, port, index, file_name = data
+    result = send_peer_request(host, port, index, file_name)
+    # this part is not needed, should only need return result, but shown here as ez of understanding 
+    if result == None:
+        return None
+
+    return result # byte_data, hash_data = result
+
+
 if reg: 
     # Register Request: Tells the server what files the peer
     # wants to share with the network. Takes in the IP address
@@ -115,6 +128,9 @@ elif download:
 
     result = send_server_request(200)
     # check for network error or file existence problem
+    if get_file(filename) != None:
+        print("File already exsited locally!")
+        exit()
     if not result:
         print("System Failed, can't not get files list")
         exit()
@@ -122,14 +138,51 @@ elif download:
         print("File Request Does Not Exit, Please Try Again")
         exit()
 
-    # True procedure for file downloading
-
+    # ----------- True procedure for file downloading ------------
     
+    # register the empty file object localy
+    local_file = File(filename, result[filename])
+    l = local_file.get_chunk_list_size()
+    printProgressBar(0, l, prefix = 'Progress:', suffix = 'Download Complete', length = 100)
+    #printProgressBar(i + 1, l, prefix = 'Progress:', suffix = 'Download Complete', length = 100)
 
+    while local_file.get_chunk_list_size() != local_file.get_aval_chunk_size():
 
-    # get a list of file name here, check if it the file exist in this list,
-    # if not in the list: return error
-    # Proceed otherwise enter the main phase
+        # find the rarest block first
+        requests = find_rarest_block(local_file, 10)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            
+            future_to_data = {executor.submit(peer_file_request, data): data for data in requests}
+
+            for future in concurrent.futures.as_completed(future_to_data):
+                data = future_to_data[future]
+
+                try:
+                    info_data = future.result()
+                    if info_data:
+                        #update json with new data
+                        byte_block, hash_byte, chunk_index = info_data
+                        # add to local file storage
+                        local_file.add_chunk(byte_block, chunk_index)
+                        local_file.add_hash_chunk(hash_byte, chunk_index)
+                        # register this chunk in central server
+                        data = {'chunk_index': chunk_index, 'filename': local_file.getName(), 'file_size': local_file.get_file_size()}
+                        res = send_server_request(400, data)
+                        if not res:
+                            print("Failed to register node from client side, check log for detail")
+                        else:
+                            print("chunk ", chunk_index, " in ", local_file.getName(), " registered!" )
+                        
+                        # print the progress bar
+                        printProgressBar(local_file.get_aval_chunk_size(), l, prefix = 'Progress:', suffix = 'Download Complete', length = 100)
+
+                    else:
+                        pass
+                except Exception as exc:
+                    print('The process generated an exception: %s' % (exc))
+
+    # create the file in local folder
+    
     
 
 else:
