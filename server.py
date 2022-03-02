@@ -3,7 +3,6 @@ import socket
 import os
 from _thread import *
 #import other class object/function
-from request import *
 import json
 import base64
 
@@ -88,7 +87,7 @@ def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
 ServerSocket = socket.socket()
 #host = '104.38.105.225'
 host = '127.0.0.1'
-port = 65483
+port = 65400
 ThreadCount = 0
 
 try:
@@ -109,7 +108,7 @@ def threaded_client(connection, addr):
     data = json.loads(data.decode("utf-8"))
     if data['code'] == 100:
         print("recieved code 100")
-        node = check_node_valid(address, data['port'])
+        node = check_node_valid(data['addr'], data['port'])
         if not node:
             print("incorrect port number")
             connection.send(package_response({}, "Failed", Error_code="ERROR: Incorrect Port Number!"))

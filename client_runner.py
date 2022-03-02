@@ -55,12 +55,7 @@ if reg:
     # file, a file name and its length.
     # check for error
     file_entry = []
-    # enter port number to verify the client information
-    port = input("Please enter your port number for incoming connection: ")
-    if not port.isnumeric():
-        print("Please Enter a Valid Port Number")
-        exit()
-
+    
     # let user enter all file they wish to upload
     file_input = input("Please enter all file path you wish to register: (Seperate by a single space)")
     if len(file_input) != 0:
@@ -85,9 +80,9 @@ if reg:
     send_package = []
     for file in added_file:
         send_package.append((file.getName(), file.get_file_size()))
-
+    machine_info = [get_client_server_addr(), get_client_server_port()]
     # sending the package
-    result = send_server_request(100, data=send_package, port=port)
+    result = send_server_request(100, data=send_package, port=machine_info)
     if not result:
         remove_files(added_file, "obj")
         print("registered failed, please try again")
@@ -182,7 +177,7 @@ elif download:
                     print('The process generated an exception: %s' % (exc))
 
     # create the file in local folder
-    
+    local_file.create_file()
     
 
 else:

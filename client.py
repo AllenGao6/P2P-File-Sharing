@@ -8,7 +8,6 @@ import base64
 import time
 from file import File
 import json
-from request import *
 import hashlib
 
 
@@ -81,38 +80,6 @@ def get_peer_info_by_index(data, index, file_name):
         if index in index_list:
             return (key, port, index, file_name)
 
-# find "num" number of rarest chunk index in the whole network
-# return each of their chunk_index, peer_addr, peer_port
-def find_rarest_block(file, num):
-    # get what we still miss
-    # get what is availble on the network
-    # get what we miss is most rare in the network
-    # rank these rarest chunk and select top num of chunk to return
-    file_name = file.getName()
-    missing_local = file.get_chunk_info(find_miss=True)
-    result = send_server_request(300, data=file.getName())
-    chunk_frequency = {}
-    for key, value in result.items():
-        port, index_list= value
-        for index in index_list:
-            if index not in chunk_frequency:
-                chunk_frequency[index] = 1
-            else:
-                chunk_frequency[index] += 1
-    # only looking for the missing part
-    for index in chunk_frequency.keys():
-        if index not in missing_local:
-            del chunk_frequency[index]
-
-    # rank the frequency
-    info_data = []
-    sort_orders = sorted(chunk_frequency.items(), key=lambda x: x[1])
-    for i in range(num):
-        index, _ = sort_orders[i]
-        info_data.append(get_peer_info_by_index(result, index, file_name))
-    
-    return info_data
-
         
 # verify hash
 def check_hash(byte_block, hash_block):
@@ -138,10 +105,19 @@ Request code:
 500: File Chunk Request
 '''
 # socket constant
-# server_host = '104.38.105.225'
-server_host = '127.0.0.1'
-server_port = 65483
-client_server_addr = '127.0.0.1'
+server_host = '104.38.105.225'
+# server_host = '127.0.0.1'
+server_port = 65400
+
+# this function should be placed somewhere else, put here as a shortcut
+def find_local_ip_addr():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    local_addr = s.getsockname()[0]
+    s.close()
+    return local_addr
+
+client_server_addr = find_local_ip_addr()
 client_server_port = 61000
 
 def get_client_server_addr():
@@ -172,7 +148,8 @@ def send_server_request(request_code, data=None, port=None):
 
     if request_code == 100: # request to register file list
         # sending code for particular request
-        m = {"code": request_code, "port": int(port), "data": data}
+        addr_info, port_info = port
+        m = {"code": request_code, "port": int(port_info), "data": data, 'addr': addr_info}
         data = json.dumps(m)
         ClientSocket.send(bytes(data,encoding="utf-8"))
 
@@ -289,8 +266,36 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     return [byte_block, hash_byte, chunk_index]
     
 
+# find "num" number of rarest chunk index in the whole network
+# return each of their chunk_index, peer_addr, peer_port
+def find_rarest_block(file, num):
+    # get what we still miss
+    # get what is availble on the network
+    # get what we miss is most rare in the network
+    # rank these rarest chunk and select top num of chunk to return
+    file_name = file.getName()
+    missing_local = file.get_chunk_info(find_miss=True)
+    result = send_server_request(300, data=file.getName())
+    chunk_frequency = {}
+    for key, value in result.items():
+        port, index_list= value
+        for index in index_list:
+            if index not in chunk_frequency:
+                chunk_frequency[index] = 1
+            else:
+                chunk_frequency[index] += 1
+    # only looking for the missing part
+    for index in chunk_frequency.keys():
+        if index not in missing_local:
+            del chunk_frequency[index]
 
-
-
+    # rank the frequency
+    info_data = []
+    sort_orders = sorted(chunk_frequency.items(), key=lambda x: x[1])
+    for i in range(num):
+        index, _ = sort_orders[i]
+        info_data.append(get_peer_info_by_index(result, index, file_name))
+    
+    return info_data
 
 
