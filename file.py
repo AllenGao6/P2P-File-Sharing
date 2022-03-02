@@ -36,9 +36,11 @@ class File:
             self.file_size = file_size
             if full_info:
                 self.chunk_list = [True] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
+                self.chunk_list_size = len(self.chunk_list)
                 self.hashed_chunk_list = [True] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
             else:
                 self.chunk_list = [None] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
+                self.chunk_list_size = len(self.chunk_list)
                 self.hashed_chunk_list = [None] * (self.file_size // self.SINGLE_CHUNK_SIZE + 1)
 
     # create the file in local folder
@@ -176,7 +178,7 @@ class File:
 
     # get the number of available chunk in file
     def get_aval_chunk_size(self):
-        result = self.index_list
+        result = self.get_chunk_info(find_miss=False)
         return len(result)
 
     

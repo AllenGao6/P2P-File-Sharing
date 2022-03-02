@@ -107,7 +107,7 @@ Request code:
 # socket constant
 server_host = '104.38.105.225'
 # server_host = '127.0.0.1'
-server_port = 65402
+server_port = 65401
 
 # this function should be placed somewhere else, put here as a shortcut
 def find_local_ip_addr():
