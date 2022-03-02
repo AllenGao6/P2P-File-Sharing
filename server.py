@@ -67,7 +67,7 @@ def get_file_location(filename):
     locations = {}
     for node in client_list:
         if node.check_file_exit(filename):
-            print([node.get_port(), node.get_file(filename).get_chunk_info()])
+            # print([node.get_port(), node.get_file(filename).get_chunk_info()])
             locations[node.get_ip_addr()] = [node.get_port(), node.get_file(filename).get_chunk_info()]
     return locations
 

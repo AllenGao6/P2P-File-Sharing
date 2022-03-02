@@ -107,7 +107,7 @@ Request code:
 # socket constant
 server_host = '104.38.105.225'
 # server_host = '127.0.0.1'
-server_port = 65401
+server_port = 65402
 
 # this function should be placed somewhere else, put here as a shortcut
 def find_local_ip_addr():
@@ -118,7 +118,7 @@ def find_local_ip_addr():
     return local_addr
 
 client_server_addr = find_local_ip_addr()
-client_server_port = 61001
+client_server_port = 61002
 
 def get_client_server_addr():
     return client_server_addr
@@ -242,7 +242,7 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     ClientSocket.send(bytes(data,encoding="utf-8"))
 
     # recieve responce data
-    byte_block = ClientSocket.recv(8192)
+    byte_block = ClientSocket.recv(16384)
     if len(byte_block) == 0: # if the responce is 
         print("Failed to get data")
         ClientSocket.close()
