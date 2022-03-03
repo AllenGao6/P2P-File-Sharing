@@ -138,7 +138,7 @@ def find_local_ip_addr():
     return local_addr
 
 client_server_addr = find_local_ip_addr()
-client_server_port = 61017
+client_server_port = 61024
 
 def get_client_server_addr():
     return client_server_addr
@@ -276,8 +276,7 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     ClientSocket.send(bytes(data,encoding="utf-8"))
     # recieve hashed data
     res = ClientSocket.recv(2048)
-    res = json.loads(res.decode("utf-8"))
-    hash_byte = res['data']
+    hash_byte = res.decode('utf-8')
     # check hash for data integrity
     if not check_hash(byte_block, hash_byte):
         print("Hash Does Not Match With Data")

@@ -45,9 +45,9 @@ def threaded_client(connection, addr):
       connection.close()
       return
    print("sending hash data")
-   hash_response = json.dumps({"data": hash_block})
-   response = bytes(hash_response,encoding="utf-8")
-   connection.send(response)
+   # hash_response = json.dumps({"data": hash_block})
+   # response = bytes(hash_response,encoding="utf-8")
+   connection.send(str.encode(hash_block))
    print("data transfer complete, ending...")
    connection.close()
     
