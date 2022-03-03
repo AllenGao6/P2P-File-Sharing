@@ -18,7 +18,7 @@ except ModuleNotFoundError:
 from struct import unpack
 import config
 
-local_store_file = "local_store.pkl"
+local_store_file = config.Client_Peer_data_storage
 # read data into pickle file
 def save_object(obj):
     with open(local_store_file, 'wb') as outp:  # Overwrites any existing file.
@@ -235,8 +235,6 @@ def send_server_request(request_code, data=None, port=None):
 def send_peer_request(peer_host, peer_port, chunk_index, file_name):
 
     ClientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    print('Waiting for connection')
     try:
         ClientSocket.connect((peer_host, peer_port))
     except socket.error as e:

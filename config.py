@@ -11,3 +11,6 @@ server_addr = '104.38.105.225'
 server_port = 65402
 peer_addr = find_local_ip_addr()
 peer_port = 61032
+
+Server_data_storage = "server_data.pkl"
+Client_Peer_data_storage = "peer_local_store.pkl"

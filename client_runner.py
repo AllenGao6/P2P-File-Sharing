@@ -136,14 +136,18 @@ elif download:
 
     # ----------- True procedure for file downloading ------------
     
+    # precheck if all required file are present
+    if not path.exists(config.Client_Peer_data_storage):
+        save_object([])
+
     # register the empty file object localy
     local_file = File(filename, result[filename])
-    print(result[filename])
+    # print(result[filename])
     l = local_file.get_chunk_list_size()
-    print(l)
+    # print(l)
     printProgressBar(0, l, prefix = 'Progress:', suffix = 'Download Complete', length = 100)
     #printProgressBar(i + 1, l, prefix = 'Progress:', suffix = 'Download Complete', length = 100)
-    print(local_file.get_chunk_list_size(), local_file.get_aval_chunk_size())
+    # print(local_file.get_chunk_list_size(), local_file.get_aval_chunk_size())
     while local_file.get_chunk_list_size() != local_file.get_aval_chunk_size():
 
         # find the rarest block first

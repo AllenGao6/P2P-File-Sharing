@@ -16,7 +16,7 @@ from struct import pack
 
 
 # local data storage
-local_store_file = "server_data.pkl"
+local_store_file = config.Server_data_storage
 # read data into pickle file
 def save_object(obj):
     with open(local_store_file, 'wb') as outp:  # Overwrites any existing file.
