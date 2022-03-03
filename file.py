@@ -25,7 +25,7 @@ class File:
     # will be decided later how to handle indicator and hashing for each chunk, most likely will define a chunk hash function
     chunk_list = []
     hashed_chunk_list = []
-    SINGLE_CHUNK_SIZE = 16384
+    SINGLE_CHUNK_SIZE = 131072
 
     def __init__(self, file_name, file_size=None, full_info=False):
         self.file_name = file_name

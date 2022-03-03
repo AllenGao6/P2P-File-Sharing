@@ -16,6 +16,7 @@ try:
 except ModuleNotFoundError:
     import pickle
 from struct import unpack
+import config
 
 local_store_file = "local_store.pkl"
 # read data into pickle file
@@ -126,27 +127,6 @@ Request code:
 400: Chunk Register Request
 500: File Chunk Request
 '''
-# socket constant
-server_host = '104.38.105.225'
-# server_host = '127.0.0.1'
-server_port = 65402
-
-# this function should be placed somewhere else, put here as a shortcut
-def find_local_ip_addr():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))
-    local_addr = s.getsockname()[0]
-    s.close()
-    return local_addr
-
-client_server_addr = find_local_ip_addr()
-client_server_port = 61025
-
-def get_client_server_addr():
-    return client_server_addr
-
-def get_client_server_port():
-    return client_server_port
 
 def check_response(responce):
     if responce.decode('utf-8') != "200":
@@ -159,7 +139,7 @@ def send_server_request(request_code, data=None, port=None):
 
     print('Waiting for connection')
     try:
-        ClientSocket.connect((server_host, server_port))
+        ClientSocket.connect((config.server_addr, config.server_port))
     except socket.error as e:
         print(str(e))
     Response = ClientSocket.recv(2048)
@@ -223,8 +203,8 @@ def send_server_request(request_code, data=None, port=None):
     elif request_code == 400: # register a chunk
 
         added_data = data
-        added_data['peer_addr'] = get_client_server_addr()
-        added_data['peer_port'] = get_client_server_port()
+        added_data['peer_addr'] = config.peer_addr
+        added_data['peer_port'] = config.peer_port
         m = {"code": request_code, "data": added_data}
         data = json.dumps(m)
         ClientSocket.send(bytes(data,encoding="utf-8"))

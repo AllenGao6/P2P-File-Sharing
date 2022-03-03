@@ -2,16 +2,15 @@ import socket
 import json
 from client import *
 from struct import pack
+import config
 
 # socket related constant
 ServerSocket = socket.socket()
 ThreadCount = 0
-# server_host = '104.38.105.225'
-client_server_addr = get_client_server_addr()
-client_server_port = get_client_server_port()
+
 
 try:
-   ServerSocket.bind((client_server_addr, client_server_port))
+   ServerSocket.bind((config.peer_addr, config.peer_port))
 except socket.error as e:
    print(str(e))
 

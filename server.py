@@ -11,6 +11,7 @@ try:
 except ModuleNotFoundError:
     import pickle
 from os import path
+import config
 
 
 # local data storage
@@ -96,12 +97,19 @@ def get_file_location(filename):
 
 # register a file chunk for a particular peer node
 def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
-   
-    for node in getData():
-        if node.get_ip_addr() == peer_addr and node.get_port() == peer_port:
-            status = node.register_chunk(chunk_index, filename, file_size)
-            return status
-    return False
+    
+    data_list = getData()
+    check_node_valid(peer_addr, peer_port)
+    index = -999
+    for i in range(len(data_list)):
+        if data_list[i].get_ip_addr() == peer_addr and data_list[i].get_port() == peer_port:
+            index = i
+
+    status = data_list[index].register_chunk(chunk_index, filename, file_size)
+    
+    saveData(data_list)
+
+    return status
 
 
 
@@ -111,13 +119,10 @@ def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
 #kill -9 <PID>
 # socket related constant
 ServerSocket = socket.socket()
-host = '104.38.105.225'
-# host = '127.0.0.1'
-port = 65402
 ThreadCount = 0
 
 try:
-    ServerSocket.bind((host, port))
+    ServerSocket.bind((config.server_addr, config.server_port))
 except socket.error as e:
     print(str(e))
 
