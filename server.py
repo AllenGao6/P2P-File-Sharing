@@ -106,6 +106,9 @@ def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
         if data_list[i].get_ip_addr() == peer_addr and data_list[i].get_port() == peer_port:
             index = i
 
+    if index == -999:
+        print("Critical Error Detected! ")
+        return False
     status = data_list[index].register_chunk(chunk_index, filename, file_size)
     
     saveData(data_list)
