@@ -42,7 +42,7 @@ def threaded_client(connection, addr):
    connection.sendall(length)
    connection.sendall(m)
    print("data sent")
-   
+
    # recieve confirmation
    data = connection.recv(2048)
    data = json.loads(data.decode("utf-8"))
@@ -53,6 +53,7 @@ def threaded_client(connection, addr):
    print("sending hash data")
    # hash_response = json.dumps({"data": hash_block})
    # response = bytes(hash_response,encoding="utf-8")
+   print(hash_block)
    connection.send(str.encode(hash_block))
    print("data transfer complete, ending...")
    connection.close()

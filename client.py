@@ -4,6 +4,7 @@ from ipaddress import ip_address
 import os
 from _thread import *
 from socket import *
+import socket
 import base64
 import time
 from file import File
@@ -105,7 +106,7 @@ def get_peer_info_by_index(data, index, file_name):
 # verify hash
 def check_hash(byte_block, hash_block):
     # implement sha1 for verification
-    obj_sha3_256 = hashlib.sha3_256(byte_block)
+    obj_sha3_256 = hashlib.sha3_256(byte_block).hexdigest()
 
     if obj_sha3_256 == hash_block:
         return True
@@ -128,7 +129,7 @@ Request code:
 # socket constant
 server_host = '104.38.105.225'
 # server_host = '127.0.0.1'
-server_port = 65401
+server_port = 65402
 
 # this function should be placed somewhere else, put here as a shortcut
 def find_local_ip_addr():
@@ -266,6 +267,7 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     print("1")
     bs = ClientSocket.recv(8)
     (length,) = unpack('>Q', bs)
+    print("ideal length", length)
     byte_block = b''
     while len(byte_block) < length:
         # doing it in batches is generally better than trying
@@ -273,6 +275,7 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
         to_read = length - len(byte_block)
         byte_block += ClientSocket.recv(
             4096 if to_read > 4096 else to_read)
+    print("actual length", len(byte_block))
     # byte_block = ClientSocket.recv(16384)
     print("2")
     if len(byte_block) == 0: # if the responce is 
@@ -287,6 +290,8 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     # recieve hashed data
     res = ClientSocket.recv(2048)
     hash_byte = res.decode('utf-8')
+    print(hash_byte)
+    print(len(hash_byte))
     # check hash for data integrity
     if not check_hash(byte_block, hash_byte):
         print("Hash Does Not Match With Data")
@@ -317,14 +322,14 @@ def find_rarest_block(file, num):
             else:
                 chunk_frequency[index] += 1
     # only looking for the missing part
-    for index in chunk_frequency.keys():
+    for index in list(chunk_frequency.keys()):
         if index not in missing_local:
             del chunk_frequency[index]
 
     # rank the frequency
     info_data = []
     sort_orders = sorted(chunk_frequency.items(), key=lambda x: x[1])
-    for i in range(num):
+    for i in range(min(num, len(sort_orders))):
         index, _ = sort_orders[i]
         info_data.append(get_peer_info_by_index(result, index, file_name))
     

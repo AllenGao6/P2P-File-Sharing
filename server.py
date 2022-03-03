@@ -113,7 +113,7 @@ def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
 ServerSocket = socket.socket()
 host = '104.38.105.225'
 # host = '127.0.0.1'
-port = 65401
+port = 65402
 ThreadCount = 0
 
 try:
