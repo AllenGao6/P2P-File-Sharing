@@ -12,6 +12,7 @@ except ModuleNotFoundError:
     import pickle
 from os import path
 import config
+from struct import pack
 
 
 # local data storage
@@ -169,6 +170,11 @@ def threaded_client(connection, addr):
     elif data['code'] == 300: # file location request
         result = get_file_location(data['data'])
         response = package_response(result, "Success")
+        length = pack('>Q', len(response))
+
+        # sendall to make sure it blocks if there's back-pressure on the socket
+        # print("sending data to peer")
+        connection.sendall(length)
         connection.sendall(response)
         connection.close()
 

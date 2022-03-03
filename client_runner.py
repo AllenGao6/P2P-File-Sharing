@@ -7,6 +7,7 @@ from file import File
 from client import *
 from progress_bar import printProgressBar
 import concurrent.futures
+import config
 
 parser = argparse.ArgumentParser(description='Choose an action to perform in this P2P network')
 
@@ -80,7 +81,7 @@ if reg:
     send_package = []
     for file in added_file:
         send_package.append((file.getName(), file.get_file_size()))
-    machine_info = [get_client_server_addr(), get_client_server_port()]
+    machine_info = [config.peer_addr , config.peer_port]
     # sending the package
     result = send_server_request(100, data=send_package, port=machine_info)
     if not result:
@@ -168,7 +169,9 @@ elif download:
                         if not res:
                             print("Failed to register node from client side, check log for detail")
                         else:
-                            print("chunk ", chunk_index, " in ", local_file.getName(), " registered!" )
+                            # this will show file chunk info, will uncomment if needed
+                            # print("chunk ", chunk_index, " in ", local_file.getName(), " registered!" )
+                            pass
                         
                         # print the progress bar
                         printProgressBar(local_file.get_aval_chunk_size(), l, prefix = 'Progress:', suffix = 'Download Complete', length = 100)

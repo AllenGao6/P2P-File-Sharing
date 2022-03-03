@@ -37,19 +37,17 @@ def threaded_client(connection, addr):
    length = pack('>Q', len(m))
 
    # sendall to make sure it blocks if there's back-pressure on the socket
-   print("sending data to peer")
+   # print("sending data to peer")
    connection.sendall(length)
    connection.sendall(m)
-   print("data sent")
+   # print("data sent")
 
    # recieve confirmation
    data = connection.recv(2048)
    data = json.loads(data.decode("utf-8"))
    if data['status'] != "Success":
-      print("hggg")
       connection.close()
       return
-   print("sending hash data")
    # hash_response = json.dumps({"data": hash_block})
    # response = bytes(hash_response,encoding="utf-8")
    print(hash_block)

@@ -189,7 +189,17 @@ def send_server_request(request_code, data=None, port=None):
         ClientSocket.send(bytes(data,encoding="utf-8"))
         
         # waiting for the response
-        res = ClientSocket.recv(8192)
+        # recieve responce data
+        bs = ClientSocket.recv(8)
+        (length,) = unpack('>Q', bs)
+        res = b''
+        while len(res) < length:
+            # doing it in batches is generally better than trying
+            # to do it all in one go, so I believe.
+            to_read = length - len(res)
+            res += ClientSocket.recv(
+                4096 if to_read > 4096 else to_read)
+
         # print(res)
         # close the connection
         ClientSocket.close()
@@ -244,10 +254,8 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     ClientSocket.send(bytes(data,encoding="utf-8"))
 
     # recieve responce data
-    print("1")
     bs = ClientSocket.recv(8)
     (length,) = unpack('>Q', bs)
-    print("ideal length", length)
     byte_block = b''
     while len(byte_block) < length:
         # doing it in batches is generally better than trying
@@ -255,14 +263,11 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
         to_read = length - len(byte_block)
         byte_block += ClientSocket.recv(
             4096 if to_read > 4096 else to_read)
-    print("actual length", len(byte_block))
     # byte_block = ClientSocket.recv(16384)
-    print("2")
     if len(byte_block) == 0: # if the responce is 
         print("Failed to get data")
         ClientSocket.close()
         return None
-    print("data successfully recieved")
     # send success response to get hash data
     data = {'status':"Success"}
     data = json.dumps(data)
@@ -270,15 +275,13 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     # recieve hashed data
     res = ClientSocket.recv(2048)
     hash_byte = res.decode('utf-8')
-    print(hash_byte)
-    print(len(hash_byte))
     # check hash for data integrity
     if not check_hash(byte_block, hash_byte):
         print("Hash Does Not Match With Data")
         ClientSocket.close()
         return None
     # print out log here
-    print("get file", file_name, " chunk index ", chunk_index, " from peer ", peer_host)
+    #print("get file", file_name, " chunk index ", chunk_index, " from peer ", peer_host)
     
     return [byte_block, hash_byte, chunk_index]
     
