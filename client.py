@@ -136,7 +136,6 @@ def check_response(responce):
 
 def send_server_request(request_code, data=None, port=None):
     ClientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     # print('Waiting for connection')
     try:
         ClientSocket.connect((config.server_addr, config.server_port))

@@ -7,10 +7,10 @@ def find_local_ip_addr():
     local_addr = s.getsockname()[0]
     s.close()
     return local_addr
-server_addr = '104.38.105.225'
-server_port = 65405
+server_addr = '10.32.123.243'
+server_port = 65442
 peer_addr = find_local_ip_addr()
-peer_port = 61051
+peer_port = 61052
 
 Server_data_storage = "server_data.pkl"
 Client_Peer_data_storage = "peer_local_store.pkl"
