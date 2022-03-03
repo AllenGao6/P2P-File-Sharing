@@ -9,59 +9,79 @@ import time
 from file import File
 import json
 import hashlib
+from os import path
+try:
+    import cPickle as pickle
+except ModuleNotFoundError:
+    import pickle
 
+local_store_file = "local_store.pkl"
+# read data into pickle file
+def save_object(obj):
+    with open(local_store_file, 'wb') as outp:  # Overwrites any existing file.
+        pickle.dump(obj, outp, pickle.HIGHEST_PROTOCOL)
 
+# get all object stored in file
+def getData():
+    if not path.exists(local_store_file):
+        save_object([])
+    with open(local_store_file, 'rb') as inp:
+        data_list = pickle.load(inp)
+    return data_list
 
+# save all object stored in file
+def saveData(data):
+    save_object(data)
 
-# # ip, port global info
-# # host = socket.gethostbyname(socket.gethostname())
-# host = '127.0.0.1'
-# port = 65483
-
-# creating local file list
-local_files = []
-
-
+# write data into pickle file
 #-----------------supporting function call-------------------
 # get the file objext by file name
 def get_file(name):
-    for file in local_files:
+    for file in getData():
+        # print(file.getName())
         if file.getName() == name:
             return file
     return None
 # get all filename existed locallly
 def get_all_filename():
-    return [file.getName() for file in local_files]
+    return [file.getName() for file in getData()]
 
 # remove a file by its name
 def remove_file_by_name(name):
-    for file in local_files:
+    data = getData()
+    for file in data:
         if file.getName() == name:
-            local_files.remove(file)
+            data.remove(file)
             break
+    saveData(data)
 
 # register file to client
 def register_local_file(file_list):
     added_file = []
     filename_space = get_all_filename()
+    data = getData()
     for file in file_list:
         if file not in filename_space:
             new_file = File(file)
-            local_files.append(new_file)
+            data.append(new_file)
             added_file.append(new_file)
+    saveData(data)
     return added_file
 
 #remove files from local file list
 def remove_files(files, type):
+    data = getData()
     if type == "obj":
         for file in files:
-            local_files.remove(file)
+            data.remove(file)
     if type == "name":
         for file in files:
             remove_file_by_name(file)
+    saveData(data)
 
 # get certain chunk data from a file
 def get_file_chunk(filename, chunk_index):
+    print(filename)
     file = get_file(filename)
     if not file:
         print("Failed to find file")
@@ -118,7 +138,7 @@ def find_local_ip_addr():
     return local_addr
 
 client_server_addr = find_local_ip_addr()
-client_server_port = 61002
+client_server_port = 61017
 
 def get_client_server_addr():
     return client_server_addr
@@ -242,11 +262,14 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
     ClientSocket.send(bytes(data,encoding="utf-8"))
 
     # recieve responce data
+    print("1")
     byte_block = ClientSocket.recv(16384)
+    print("2")
     if len(byte_block) == 0: # if the responce is 
         print("Failed to get data")
         ClientSocket.close()
         return None
+    print("data successfully recieved")
     # send success response to get hash data
     data = {'status':"Success"}
     data = json.dumps(data)
@@ -297,5 +320,3 @@ def find_rarest_block(file, num):
         info_data.append(get_peer_info_by_index(result, index, file_name))
     
     return info_data
-
-

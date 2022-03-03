@@ -6,24 +6,46 @@ from _thread import *
 import json
 import base64
 from node import Node
+try:
+    import cPickle as pickle
+except ModuleNotFoundError:
+    import pickle
+from os import path
 
 
 # local data storage
-client_list = []
+local_store_file = "server_data.pkl"
+# read data into pickle file
+def save_object(obj):
+    with open(local_store_file, 'wb') as outp:  # Overwrites any existing file.
+        pickle.dump(obj, outp, pickle.HIGHEST_PROTOCOL)
 
+# get all object stored in file
+def getData():
+    if not path.exists(local_store_file):
+        save_object([])
+    with open(local_store_file, 'rb') as inp:
+        data_list = pickle.load(inp)
+    return data_list
+
+# save all object stored in file
+def saveData(data):
+    save_object(data)
+    
 #-----------------supporting function call-------------------
 # see if port match with address
 def match_port(addr, port):
-    for node in client_list:
+    for node in getData():
         if node.get_ip_addr() == addr and node.get_port() == port:
             return node
     return None
 # get all address
 def get_all_address():
-    return [node.get_ip_addr() for node in client_list]
+    return [node.get_ip_addr() for node in getData()]
 
 #check if the port number match the record
 def check_node_valid(address, port):
+    node_list = getData()
     address_book = get_all_address()
     if address in address_book:
         result = match_port(address, port)
@@ -33,7 +55,8 @@ def check_node_valid(address, port):
             return None
     else:
         new_node = Node(address, port) 
-        client_list.append(new_node)
+        node_list.append(new_node)
+        saveData(node_list)
         return new_node
 
 # package response and send to client
@@ -50,7 +73,7 @@ def package_response(data, status_code, Error_code=None):
 # get all files avaiable to download in the network
 def get_file_list():
     result = {}
-    for node in client_list:
+    for node in getData():
         for file in node.get_file_list():
             file_name = file.getName()
             file_size = file.get_file_size()
@@ -65,7 +88,7 @@ def get_file_list():
 # get all location for a particular file
 def get_file_location(filename):
     locations = {}
-    for node in client_list:
+    for node in getData():
         if node.check_file_exit(filename):
             # print([node.get_port(), node.get_file(filename).get_chunk_info()])
             locations[node.get_ip_addr()] = [node.get_port(), node.get_file(filename).get_chunk_info()]
@@ -74,7 +97,7 @@ def get_file_location(filename):
 # register a file chunk for a particular peer node
 def register_file_chunk(chunk_index, peer_addr, peer_port, filename, file_size):
    
-    for node in client_list:
+    for node in getData():
         if node.get_ip_addr() == peer_addr and node.get_port() == peer_port:
             status = node.register_chunk(chunk_index, filename, file_size)
             return status

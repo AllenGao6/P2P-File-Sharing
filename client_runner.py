@@ -91,14 +91,14 @@ if reg:
         for filename, status in result.items():
             if status == "Failed":
                 remove_file.append(filename)
-        remove_files(remove_file, "name")
+        # remove_files(remove_file, "name")
 
         if len(remove_file) == 0:
             print("All file registered successfully")
         else:
             file_str = ", ".join(remove_file)
             print("File failed to register: " + file_str)
-    
+    print(get_all_filename())
 elif file_list_request:
     # File List Request: Asks the server for the list of files. 
     result = send_server_request(200)

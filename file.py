@@ -31,6 +31,8 @@ class File:
         self.file_name = file_name
         self.file_type = self.get_fileType()
         if not file_size:
+            self.chunk_list = []
+            self.hashed_chunk_list = []
             self.chunkize()
         else:
             self.file_size = file_size
@@ -140,6 +142,8 @@ class File:
     def check_file_chunk(self, index):
         if index >= self.chunk_list_size:
             return False
+        # print("actual chunk_size:", len(self.chunk_list))
+        # print("chunk_size:", self.chunk_list_size)
         return self.chunk_list[index] != None
 
     # get a particular chunk in chunk_list
