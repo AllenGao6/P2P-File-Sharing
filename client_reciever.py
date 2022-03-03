@@ -1,6 +1,7 @@
 import socket
 import json
 from client import *
+from struct import pack
 
 # socket related constant
 ServerSocket = socket.socket()
@@ -33,10 +34,15 @@ def threaded_client(connection, addr):
       m = str.encode('')
    else:
       m = byte_block
-   # sending data to peer
+   # use struct to make sure we have a consistent endianness on the length
+   length = pack('>Q', len(m))
+
+   # sendall to make sure it blocks if there's back-pressure on the socket
    print("sending data to peer")
+   connection.sendall(length)
    connection.sendall(m)
    print("data sent")
+   
    # recieve confirmation
    data = connection.recv(2048)
    data = json.loads(data.decode("utf-8"))

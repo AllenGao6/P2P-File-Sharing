@@ -3,7 +3,7 @@
 from ipaddress import ip_address
 import os
 from _thread import *
-import socket
+from socket import *
 import base64
 import time
 from file import File
@@ -14,6 +14,7 @@ try:
     import cPickle as pickle
 except ModuleNotFoundError:
     import pickle
+from struct import unpack
 
 local_store_file = "local_store.pkl"
 # read data into pickle file
@@ -138,7 +139,7 @@ def find_local_ip_addr():
     return local_addr
 
 client_server_addr = find_local_ip_addr()
-client_server_port = 61024
+client_server_port = 61025
 
 def get_client_server_addr():
     return client_server_addr
@@ -263,7 +264,16 @@ def send_peer_request(peer_host, peer_port, chunk_index, file_name):
 
     # recieve responce data
     print("1")
-    byte_block = ClientSocket.recv(16384)
+    bs = ClientSocket.recv(8)
+    (length,) = unpack('>Q', bs)
+    byte_block = b''
+    while len(byte_block) < length:
+        # doing it in batches is generally better than trying
+        # to do it all in one go, so I believe.
+        to_read = length - len(byte_block)
+        byte_block += ClientSocket.recv(
+            4096 if to_read > 4096 else to_read)
+    # byte_block = ClientSocket.recv(16384)
     print("2")
     if len(byte_block) == 0: # if the responce is 
         print("Failed to get data")
